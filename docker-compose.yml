@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    image: examhall-backend:latest
+    container_name: examhall_backend_container
+    env_file: .env
+    ports:
+      - "3001:3001"
+    restart: always
+    networks:
+      - examhall_network
+
+networks:
+  examhall_network:
+    name: examhall_network
+    driver: bridge
