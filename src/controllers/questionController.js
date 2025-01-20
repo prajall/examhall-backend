@@ -25,7 +25,7 @@ export const getExamQuestions = async (req, res) => {
     const skipQuestions = (level - 1) * limit;
 
     const questions = await Question.aggregate([
-      { $match: { exam: examId } },
+      { $match: { exam: new mongoose.Types.ObjectId(examId)  } },
       { $sort: { _id: 1 } },
       { $skip: skipQuestions },
       { $limit: limit },
@@ -52,7 +52,7 @@ export const getExamQuestionsAdmin = async (req, res) => {
     const skipQuestions = (level - 1) * limit;
 
     const questions = await Question.aggregate([
-      { $match: { exam: new mongoose.Types.ObjectId(examId) } }, // Use "new" for ObjectId
+      { $match: { exam: new mongoose.Types.ObjectId(examId) } },
       { $sort: { _id: 1 } },
       { $skip: skipQuestions },
       { $limit: limit },
@@ -107,16 +107,6 @@ export const changeQuestionFormat = async (req, res) => {
       },
     ]);
 
-    // const updateResult = await Question.updateMany(
-    //   {},
-    //   {
-    //     $unset: {
-    //       name: "",
-    //     },
-    //   }
-    // );
-
-    console.log(updateResult);
 
     console.log(`${updateResult.modifiedCount} documents were updated.`);
     return res

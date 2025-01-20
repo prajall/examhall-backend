@@ -22,26 +22,21 @@ app.listen(port, () => {
 let questionDB;
 let quizDB;
 try {
-  questionDB = mongoose.createConnection(process.env.DATABASE1_URI);
-  questionDB.on("connected", () => {
-    console.log("Database1 Connected Successfully");
-  });
-
   quizDB = mongoose.createConnection(process.env.DATABASE2_URI);
 
   quizDB.on("connected", () => {
-    console.log("Database2 Connected Successfully");
+    console.log("Database Connected Successfully");
   });
 
   quizDB.on("error", (error) => {
-    console.log("Database2 Connection Error: ", error);
+    console.log("Database Connection Error: ", error);
   });
 } catch (err) {
   console.log(err);
 }
 
 // Assign each model to databases
-export const Question = questionDB.model("Question", questionSchema);
+export const Question = quizDB.model("Question", questionSchema);
 export const Score = quizDB.model("Score", scoreSchema);
 export const User = quizDB.model("User", userSchema);
 export const Exam = quizDB.model("Exams", examSchema);
