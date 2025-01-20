@@ -1,4 +1,4 @@
-import { User, UserExam } from "../../api/index.js";
+import { ExamSold, User, UserExam } from "../../api/index.js";
 import { Exam } from "../../api/index.js";
 import { GameData } from "../../api/index.js";
 import mongoose from "mongoose";
@@ -188,7 +188,49 @@ export const getLevels = async (req, res) => {
       exam: examObjectId,
     });
 
-    const levelsUnlocked = userExamData ? userExamData.levelsUnlocked : 1;
+    const examSold = await ExamSold.findOne({
+      user: userObjectId,
+      exam: examObjectId,
+    });
+
+    let levelsUnlocked = 1;
+
+    if (examSold) {
+      levelsUnlocked = totalLevels;
+    } else {
+      levelsUnlocked = userExamData ? userExamData.levelsUnlocked : 1;
+    }
+
+    // const levelsData = await GameData.aggregate([
+    //   {
+    //     $match: {
+    //       user: userObjectId,
+    //       exam: examObjectId,
+    //     },
+    //   },
+    //   {
+    //     $group: {
+    //       _id: "$level",
+    //       totalCorrect: { $max: "$totalCorrect" },
+    //       doc: { $first: "$$ROOT" },
+    //       attempts: { $sum: 1 },
+    //     },
+    //   },
+    //   {
+    //     $sort: {
+    //       _id: 1,
+    //     },
+    //   },
+    //   {
+    //     $project: {
+    //       _id: 0,
+    //       level: "$_id",
+    //       totalSolved: "$doc.totalSolved",
+    //       totalCorrect: "$doc.totalCorrect",
+    //       attempts: 1,
+    //     },
+    //   },
+    // ]);
 
     const levelsData = await GameData.aggregate([
       {
@@ -200,9 +242,26 @@ export const getLevels = async (req, res) => {
       {
         $group: {
           _id: "$level",
-          totalCorrect: { $max: "$totalCorrect" },
-          doc: { $first: "$$ROOT" },
+          totalSolved: { $sum: "$totalSolved" },
+          totalCorrect: { $sum: "$totalCorrect" },
           attempts: { $sum: 1 },
+          totalScore: { $sum: "$score" },
+        },
+      },
+      {
+        $addFields: {
+          accuracy: {
+            $cond: [
+              { $eq: ["$totalSolved", 0] },
+              0,
+              {
+                $multiply: [
+                  { $divide: ["$totalCorrect", "$totalSolved"] },
+                  100,
+                ],
+              },
+            ],
+          },
         },
       },
       {
@@ -214,29 +273,32 @@ export const getLevels = async (req, res) => {
         $project: {
           _id: 0,
           level: "$_id",
-          totalSolved: "$doc.totalSolved",
-          totalCorrect: "$doc.totalCorrect",
+          totalSolved: 1,
+          totalCorrect: 1,
           attempts: 1,
+          totalScore: 1,
+          accuracy: 1,
         },
       },
     ]);
 
-    // Initialize an array with totalLevels and default values
     const levelsArray = Array.from({ length: totalLevels }, (_, index) => ({
       level: index + 1,
       unlocked: index + 1 <= levelsUnlocked,
       totalSolved: 0,
       totalCorrect: 0,
       attempts: 0,
+      accuracy: 0,
+      totalScore: 0,
     }));
 
     if (levelsArray.length > 0) {
       levelsArray[0].unlocked = true;
     }
 
-    // Update levelsArray with data from levelsData
     levelsData.forEach((levelData) => {
       const levelIndex = levelData.level - 1;
+
       if (levelsArray[levelIndex]) {
         levelsArray[levelIndex] = {
           ...levelsArray[levelIndex],
