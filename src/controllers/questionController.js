@@ -406,6 +406,7 @@ export const deleteQuestion = async (req, res) => {
     if (deletedQuestion) {
       Exam.findByIdAndUpdate(question.exam, {
         totalQuestions: question.totalQuestions - 1,
+        totalLevels: Math.ceil((question.totalQuestions - 1) / 50),
       });
     } else {
       return res.status(404).json({ message: "Question not found" });
