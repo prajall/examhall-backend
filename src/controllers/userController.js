@@ -173,7 +173,7 @@ export const getUserInfo = async (req, res) => {
   try {
     const userDoc = await User.findById(user._id).select(
       "-createdAt -updatedAt -verificationCode"
-    );
+    );``
     if (!user) {
       return res.status(404).send("User not found");
     }
@@ -357,7 +357,7 @@ export const resetPassword = async (req, res) => {
 
 export const etutorLogin = async (req, res) => {
   const { etutor_id, name } = req.headers;
-  if (!etutor_id || !name) {
+  if (!etutor_id ) {
     return res.status(400).json({ message: "Etutor Id and Name is required" });
   }
 
@@ -370,7 +370,7 @@ export const etutorLogin = async (req, res) => {
     } else {
       const newUser = new User({
         etutor_id,
-        name,
+        name:name || "Etutor Exam user",
         image: null,
       });
       if (newUser) {

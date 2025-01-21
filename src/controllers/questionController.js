@@ -25,7 +25,7 @@ export const getExamQuestions = async (req, res) => {
     const skipQuestions = (level - 1) * limit;
 
     const questions = await Question.aggregate([
-      { $match: { exam: new mongoose.Types.ObjectId(examId)  } },
+      { $match: { exam: new mongoose.Types.ObjectId(examId) } },
       { $sort: { _id: 1 } },
       { $skip: skipQuestions },
       { $limit: limit },
@@ -106,7 +106,6 @@ export const changeQuestionFormat = async (req, res) => {
         },
       },
     ]);
-
 
     console.log(`${updateResult.modifiedCount} documents were updated.`);
     return res
@@ -402,14 +401,20 @@ export const deleteQuestion = async (req, res) => {
     }
 
     // Delete the question from the database
-    await Question.findByIdAndDelete(questionId);
+    const deletedQuestion = await Question.findByIdAndDelete(questionId);
 
-    return res
-      .status(200)
-      .json({
-        message: "Question and associated images deleted successfully",
-        data: question,
+    if (deletedQuestion) {
+      Exam.findByIdAndUpdate(question.exam, {
+        totalQuestions: question.totalQuestions - 1,
       });
+    } else {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    return res.status(200).json({
+      message: "Question and associated images deleted successfully",
+      data: question,
+    });
   } catch (error) {
     console.error("Error deleting question:", error);
     return res.status(500).json({ message: "Failed to delete question" });
